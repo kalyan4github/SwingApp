@@ -21,7 +21,7 @@ public class AppUI {
 
     JFrame frame;
     JTextField txtId,txtFirstName,txtLastName;
-    JButton addBtn, btnReset,testBtn,DisBtn;
+    JButton addBtn, btnReset,testBtn,DisBtn,searchBtn;
     JLabel l1,l2,l3,l4,l5,msg,msg1;
     JRadioButton r1,r2;
     ButtonGroup bg;
@@ -30,9 +30,11 @@ public class AppUI {
     DbConnectionUtil dbUtil = new DbConnectionUtil();
     
     public AppUI() {
-
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        double width = screenSize.getWidth();
+        double height = screenSize.getHeight();
         frame = new JFrame("Swing APP");
-        frame.setBounds(20,20,600,300);
+        frame.setBounds((int) (width / 4), (int) height / 4,600,500);
 
         l1=new JLabel("id:");
         l1.setBounds(10,10,100,20);
@@ -55,7 +57,7 @@ public class AppUI {
 
          l4=new JLabel("Branch:");
         l4.setBounds(10,100,100,20);
-        DefaultListModel<String> branch = new DefaultListModel<>();
+        final DefaultListModel<String> branch = new DefaultListModel<>();
         branch.addElement("CS");
         branch.addElement("ENTC");
         branch.addElement("ELEC");
@@ -209,11 +211,67 @@ public class AppUI {
                 resetAllField();
             }
         });
+        searchBtn = new JButton("SEARCH");
+        searchBtn.setBounds(320,10,100,20);
+        searchBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(!(txtId.getText().isEmpty())){
+                    System.out.println(txtId.getText());
+                    dbUtil = new DbConnectionUtil();
+                    Connection con = dbUtil.getDbConnection();
+                    if(con!=null){
+                        try {
+                            PreparedStatement pst = con.prepareStatement("select * from student where id=?");
+                            pst.setString(1,txtId.getText());
+                            ResultSet rs = pst.executeQuery();
+                            if(rs.next()){
+                                txtFirstName.setText(rs.getString("FIRST_NAME"));
+                                txtLastName.setText(rs.getString("LAST_NAME"));
+                                String g= rs.getString("gender");
+                                if(g.equalsIgnoreCase("male")){
+                                    r1.setSelected(true);
+                                }else {
+                                    r2.setSelected(true);
+                                }
+                                String b =rs.getString("branch");
+                                switch (b){
+                                    case "CS":
+                                        list1.setSelectedIndex(0);
+                                        break;
+                                    case "ENTC":
+                                        list1.setSelectedIndex(1);
+                                        break;
+                                    case "ELEC":
+                                        list1.setSelectedIndex(2);
+                                        break;
+                                    case "MECH":
+                                        list1.setSelectedIndex(3);
+                                        break;
+                                }
 
+                                msg.setForeground(Color.GREEN);
+                                msg.setText("DATA Retrieved Successfully!");
+                            }
+                            else{
+                                msg.setForeground(Color.red);
+                                resetAllField();
+                                msg.setText("NO DATA FOUND");
+                            }
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+
+                    }
+                }
+
+            }
+        });
 
 
         bg.add(r1);
         bg.add(r2);
+        frame.add(searchBtn);
         frame.add(l1);
         frame.add(txtId);
         frame.add(l2);
@@ -233,7 +291,7 @@ public class AppUI {
         frame.add(DisBtn);
 
 
-        frame.setSize(400,400);
+        //frame.setSize(400,400);
         frame.setLayout(null);
         frame.setVisible(true);
     }
